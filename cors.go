@@ -29,7 +29,7 @@ func New() *Client {
 func (c *Client) WrapH(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		status, ok := c.Handler(w, r)
-		if ok {
+		if !ok {
 			w.WriteHeader(status)
 			return
 		}
