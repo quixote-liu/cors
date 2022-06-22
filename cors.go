@@ -6,24 +6,22 @@ import (
 	"strings"
 )
 
-var defaultMethods = []string{"GET", "DELETE", "HEAD", "PATCH", "POST", "PUT"}
-
 type Client struct {
-	// the default supports 'GET', 'DELETE', 'HEAD', 'OPTIONS', 'PATCH', 'POST', 'PUT' methods.
-	AllowMethods []string
-
-	// the default are 'Content-Type', 'Content-Length', 'Accept', 'Authorization'
-	AllowHeaders []string
+	allowMethods []string
 
 	// the default is 14400s(4 hours), the -1 disableds cache.
-	MaxAge int
+	maxAge string
 
 	// set Cookies, the default is true.
-	WithoutCookies bool
+	withCookies bool
 }
 
 func New() *Client {
-	return &Client{}
+	return &Client{
+		allowMethods: []string{"GET", "DELETE", "HEAD", "PATCH", "POST", "PUT"},
+		maxAge:       "14400",
+		withCookies:  true,
+	}
 }
 
 func (c *Client) WrapH(h http.HandlerFunc) http.HandlerFunc {
@@ -45,10 +43,10 @@ func (c *Client) Handler(w http.ResponseWriter, r *http.Request) (status int, ok
 	w.Header().Set("Access-Control-Allow-Origin", origin)
 
 	if r.Method == "OPTIONS" {
-		w.Header().Set("Access-Control-Allow-Methods", c.allowMethods())
+		w.Header().Set("Access-Control-Allow-Methods", strings.Join(c.allowMethods, ", "))
 		w.Header().Set("Access-Control-Allow-Headers", r.Header.Get("Access-Control-Expose-Headers"))
-		w.Header().Set("Access-Control-Allow-Headers", c.maxAge())
-		if !c.WithoutCookies {
+		w.Header().Set("Access-Control-Allow-Headers", c.maxAge)
+		if c.withCookies {
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 		}
 		return 204, false
@@ -56,19 +54,17 @@ func (c *Client) Handler(w http.ResponseWriter, r *http.Request) (status int, ok
 	return 0, true
 }
 
-func (c *Client) allowMethods() string {
-	if len(c.AllowMethods) == 0 {
-		c.AllowMethods = defaultMethods
-	}
-	return strings.Join(c.AllowMethods, ", ")
+func (c *Client) SetAllowMethods(methods []string) *Client {
+	var mm []string
+	copy(mm, methods)
+	c.allowMethods = mm
+	return c
 }
 
-func (c *Client) maxAge() string {
-	if c.MaxAge == 0 {
-		c.MaxAge = 14400
+func (c *Client) SetMaxAge(maxAge int) *Client {
+	if maxAge < 0 {
+		maxAge = -1
 	}
-	if c.MaxAge < 0 {
-		c.MaxAge = -1
-	}
-	return strconv.FormatInt(int64(c.MaxAge), 10)
+	c.maxAge = strconv.FormatInt(int64(maxAge), 10)
+	return c
 }
