@@ -27,16 +27,15 @@ func New() *Client {
 
 func (c *Client) WrapH(h http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		status, ok := c.Handler(w, r)
-		if !ok {
-			w.WriteHeader(status)
+		if ok := c.Handler(w, r); ok {
+			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 		h(w, r)
 	}
 }
 
-func (c *Client) Handler(w http.ResponseWriter, r *http.Request) (status int, isOptions bool) {
+func (c *Client) Handler(w http.ResponseWriter, r *http.Request) (isOptions bool) {
 	origin := r.Header.Get("Origin")
 	if origin == "" {
 		origin = "*"
@@ -51,13 +50,13 @@ func (c *Client) Handler(w http.ResponseWriter, r *http.Request) (status int, is
 		w.Header().Set("Access-Control-Allow-Methods", strings.Join(c.allowMethods, ", "))
 		w.Header().Set("Access-Control-Allow-Headers", r.Header.Get("Access-Control-Request-Headers"))
 		w.Header().Set("Access-Control-Max-Age", c.maxAge)
-		return 204, false
+		return true
 	}
 
 	if len(c.exposeHeaders) != 0 {
 		w.Header().Set("Access-Control-Expose-Headers", strings.Join(c.exposeHeaders, ", "))
 	}
-	return 0, true
+	return false
 }
 
 func (c *Client) SetCookie(take bool) *Client {

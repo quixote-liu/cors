@@ -4,7 +4,7 @@ import "net/http"
 
 var cors = New()
 
-func Handler(w http.ResponseWriter, r *http.Request) (status int, isOption bool) {
+func Handler(w http.ResponseWriter, r *http.Request) (isOptions bool) {
 	return cors.Handler(w, r)
 }
 
