@@ -7,7 +7,8 @@ import (
 )
 
 type Client struct {
-	allowMethods []string
+	allowMethods  []string
+	exposeHeaders []string
 
 	// the default is 14400s(4 hours), the -1 disableds cache.
 	maxAge string
@@ -35,21 +36,26 @@ func (c *Client) WrapH(h http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
-func (c *Client) Handler(w http.ResponseWriter, r *http.Request) (status int, ok bool) {
-	origin := r.URL.Query().Get("Origin")
+func (c *Client) Handler(w http.ResponseWriter, r *http.Request) (status int, isOptions bool) {
+	origin := r.Header.Get("Origin")
 	if origin == "" {
 		origin = "*"
 	}
 	w.Header().Set("Access-Control-Allow-Origin", origin)
 
+	if c.withCookies {
+		w.Header().Set("Access-Control-Allow-Credentials", "true")
+	}
+
 	if r.Method == "OPTIONS" {
 		w.Header().Set("Access-Control-Allow-Methods", strings.Join(c.allowMethods, ", "))
-		w.Header().Set("Access-Control-Allow-Headers", r.Header.Get("Access-Control-Expose-Headers"))
+		w.Header().Set("Access-Control-Allow-Headers", r.Header.Get("Access-Control-Request-Headers"))
 		w.Header().Set("Access-Control-Max-Age", c.maxAge)
-		if c.withCookies {
-			w.Header().Set("Access-Control-Allow-Credentials", "true")
-		}
 		return 204, false
+	}
+
+	if len(c.exposeHeaders) != 0 {
+		w.Header().Set("Access-Control-Expose-Headers", strings.Join(c.exposeHeaders, ", "))
 	}
 	return 0, true
 }
@@ -63,6 +69,13 @@ func (c *Client) SetAllowMethods(methods []string) *Client {
 	var mm []string
 	copy(mm, methods)
 	c.allowMethods = mm
+	return c
+}
+
+func (c *Client) SetExposeHeaders(headers []string) *Client {
+	var hh []string
+	copy(hh, headers)
+	c.exposeHeaders = headers
 	return c
 }
 
