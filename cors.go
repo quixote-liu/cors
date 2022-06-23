@@ -45,13 +45,18 @@ func (c *Client) Handler(w http.ResponseWriter, r *http.Request) (status int, ok
 	if r.Method == "OPTIONS" {
 		w.Header().Set("Access-Control-Allow-Methods", strings.Join(c.allowMethods, ", "))
 		w.Header().Set("Access-Control-Allow-Headers", r.Header.Get("Access-Control-Expose-Headers"))
-		w.Header().Set("Access-Control-Allow-Headers", c.maxAge)
+		w.Header().Set("Access-Control-Max-Age", c.maxAge)
 		if c.withCookies {
 			w.Header().Set("Access-Control-Allow-Credentials", "true")
 		}
 		return 204, false
 	}
 	return 0, true
+}
+
+func (c *Client) SetCookie(take bool) *Client {
+	c.withCookies = take
+	return c
 }
 
 func (c *Client) SetAllowMethods(methods []string) *Client {
