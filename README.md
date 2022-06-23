@@ -23,7 +23,10 @@ func main() {
 ```go
 package main
 
-import "github.com/quixote-liu/cors"
+import (
+  "http"
+  "github.com/quixote-liu/cors"
+)
 
 func main() {
   mux := http.NewServeMux()
@@ -35,19 +38,19 @@ func main() {
 
 
 type mux struct {
-	*http.ServeMux
+  *http.ServeMux
 }
 
 func NewServerMux() *mux {
-	return &mux{ServeMux: http.NewServeMux()}
+  return &mux{ServeMux: http.NewServeMux()}
 }
 
 func (m *mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	if ok := cors.Handler(w, r); ok {
+  if ok := cors.Handler(w, r); ok {
     w.WriteHeader(http.StatusNotFound)
     return
   }
-	m.ServeMux.ServeHTTP(w, r)
+  m.ServeMux.ServeHTTP(w, r)
 }
 
 ```
