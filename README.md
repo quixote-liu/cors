@@ -5,7 +5,10 @@
 ```go
 package main
 
-import "github.com/quixote-liu/cors"
+import (
+  "http"
+  "github.com/quixote-liu/cors"
+)
 
 func main() {
   mux := http.NewServeMux()
@@ -40,11 +43,10 @@ func NewServerMux() *mux {
 }
 
 func (m *mux) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	status, ok := cors.Handler(w, r)
-	if !ok {
-		w.WriteHeader(status)
-		return
-	}
+	if ok := cors.Handler(w, r); ok {
+    w.WriteHeader(http.StatusNotFound)
+    return
+  }
 	m.ServeMux.ServeHTTP(w, r)
 }
 
